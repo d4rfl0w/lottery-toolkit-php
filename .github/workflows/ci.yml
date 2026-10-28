@@ -1,0 +1,50 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+        symfony: ['6.4.*', '7.*']
+    name: PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, mbstring, xml, xmlwriter
+          tools: composer:v2
+          coverage: none
+      - run: composer validate --strict
+      - run: php tools/select-symfony.php '${{ matrix.symfony }}'
+      - run: composer update --prefer-dist --no-interaction
+      - run: composer check
+      - run: composer audit --locked
+      - run: composer archive --format=zip --dir=.cache/archive
+      - run: python3 tools/check-archive.py .cache/archive/*.zip
+  core-only:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: none
+      - name: Install as a production consumer without Symfony
+        run: |
+          mkdir consumer
+          cd consumer
+          composer init --name=lottery-toolkit/core-smoke --no-interaction
+          composer config repositories.toolkit path ..
+          composer require 'rupcom/lottery-toolkit:@dev' --no-interaction --no-scripts
+          php ../tools/core-smoke.php vendor/autoload.php

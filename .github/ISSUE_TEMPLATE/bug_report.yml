@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible problem using synthetic data.
+title: '[Bug] '
+body:
+  - type: markdown
+    attributes:
+      value: 'For vulnerabilities, follow SECURITY.md. Do not include credentials or real user data.'
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: PHP, toolkit, Symfony (if used), operating system.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Include executable PHP and small synthetic input.
+      render: php
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Relevant test output

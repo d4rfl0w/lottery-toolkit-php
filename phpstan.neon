@@ -1,0 +1,10 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - examples
+    tmpDir: .phpstan.cache
+    excludePaths:
+        analyseAndScan:
+            - examples/symfony/var
+            - examples/symfony/config/reference.php

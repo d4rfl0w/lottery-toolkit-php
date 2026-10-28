@@ -1,0 +1,35 @@
+site_name: Lottery Toolkit for PHP
+site_description: Typed lottery rules, imports, statistics and Symfony integration for PHP 8.3+
+docs_dir: .cache/docs-source
+site_dir: site
+use_directory_urls: false
+theme:
+  name: mkdocs
+nav:
+  - Home: index.md
+  - Getting started: docs/getting-started.md
+  - API reference: docs/api-reference.md
+  - Symfony: docs/symfony-integration.md
+  - Statistics: docs/statistics.md
+  - Custom providers: docs/custom-providers.md
+  - Examples: docs/examples.md
+  - Architecture: docs/architecture.md
+  - Troubleshooting: docs/troubleshooting.md
+  - Validation: docs/validation.md
+  - Source analysis: docs/source-analysis.md
+  - Contributing: CONTRIBUTING.md
+  - Security: SECURITY.md
+  - Code of conduct: CODE_OF_CONDUCT.md
+  - Changelog: CHANGELOG.md
+  - License notices: THIRD_PARTY_NOTICES.md
+  - Dependency inventory: docs/dependency-licenses.md
+  - Initial API design: docs/api-design.md
+  - Polski: README.pl.md
+  - Release process: docs/publishing.md
+  - Roadmap: docs/OPEN_SOURCE_ROADMAP.md
+markdown_extensions:
+  - fenced_code
+  - tables
+validation:
+  links:
+    unrecognized_links: warn

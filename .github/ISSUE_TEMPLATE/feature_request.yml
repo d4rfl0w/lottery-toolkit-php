@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose a concrete improvement to the developer API or integration.
+title: '[Feature] '
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Use case
+      description: What real task is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API example
+      description: Show the smallest useful usage example.
+      render: php
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Alternatives and compatibility
+      description: Consider dependencies, data rights and existing behavior.

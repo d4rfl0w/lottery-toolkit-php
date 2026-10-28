@@ -1,0 +1,11 @@
+/vendor/
+/composer.lock
+/.phpunit.cache/
+/.phpstan.cache/
+/.php-cs-fixer.cache
+/.cache/
+/.idea/
+.env.local
+/examples/symfony/var/
+/site/
+/examples/symfony/config/reference.php
