@@ -27,7 +27,10 @@ require 'vendor/autoload.php';
 
 use Random\Engine\Mt19937;
 use Random\Randomizer;
-use Rupcom\LotteryToolkit\{GameRules, LotteryTicket, NumberGenerator, NumberPool};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Game\NumberPool;
+use Rupcom\LotteryToolkit\Ticket\LotteryTicket;
+use Rupcom\LotteryToolkit\Ticket\NumberGenerator;
 
 $game = new GameRules('repeat_demo', [new NumberPool('main', 3, 1, 2, allowDuplicates: true)]);
 $generator = new NumberGenerator(new Randomizer(new Mt19937(42)));

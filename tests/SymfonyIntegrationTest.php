@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace Rupcom\LotteryToolkit\Tests;
 
-use LotteryToolkitExample\{CsvDrawProvider, Kernel, LotteryService};
+use LotteryToolkitExample\CsvDrawProvider;
+use LotteryToolkitExample\Kernel;
+use LotteryToolkitExample\LotteryService;
 use PHPUnit\Framework\TestCase;
-use Rupcom\LotteryToolkit\Bridge\Symfony\{DomainExceptionSubscriber, LotteryToolkitBundle};
-use Rupcom\LotteryToolkit\{DrawCollection, DrawProviderInterface, GameRegistry, GameRules, StatisticsAnalyzer};
-use Rupcom\LotteryToolkit\Exception\{ImportException, ValidationException};
+use Rupcom\LotteryToolkit\Bridge\Symfony\DomainExceptionSubscriber;
+use Rupcom\LotteryToolkit\Bridge\Symfony\LotteryToolkitBundle;
+use Rupcom\LotteryToolkit\Draw\DrawCollection;
+use Rupcom\LotteryToolkit\Draw\DrawProviderInterface;
+use Rupcom\LotteryToolkit\Exception\ImportException;
+use Rupcom\LotteryToolkit\Exception\ValidationException;
+use Rupcom\LotteryToolkit\Game\GameRegistry;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;

@@ -1,7 +1,9 @@
 # API reference
 
-All core names below are relative to `Rupcom\LotteryToolkit`. Import the named
-classes or use fully qualified names. Examples in this reference are short API
+Core namespaces are `Rupcom\LotteryToolkit\Game`, `Draw`, `Ticket`, `Statistics`
+and `Import` beneath the same package prefix. See the namespace table in
+[architecture](architecture.md#migration-from-the-initial-flat-api). Import the
+named classes or use fully qualified names. Examples in this reference are short API
 fragments; the [README](../README.md) and [examples guide](examples.md) contain
 complete executable programs.
 
@@ -13,7 +15,8 @@ arrays is strict regardless of the caller's scalar coercion mode.
 
 - **Numbers:** `array<string,list<int>>`, one entry for each configured pool.
 - **Bets:** a non-empty list of Numbers maps; indices are zero-based.
-- **Import record:** exactly `{id: string, date: string, numbers: Numbers}`.
+- **Import record:** `Import\DrawRecord`, with string `id`, string `date` and a
+  numbers array. JSON objects use exactly those three fields.
 - **Histogram:** keys identify numbers, sums, distributions or pairs; values count
   occurrences or draws as documented.
 
@@ -34,7 +37,8 @@ providers can define domain-specific exceptions. Leaf exceptions are final.
 
 ```php
 try {
-    $draws = (new DrawImporter())->fromJson(GameRules::lotto(), '{invalid');
+    $importer = new DrawImporter();
+    $draws = $importer->import(GameRules::lotto(), new JsonDrawSource('{invalid'));
 } catch (\Rupcom\LotteryToolkit\Exception\ImportException $error) {
     // Log $error internally; choose a safe application response.
 }
@@ -152,30 +156,62 @@ foreach ($selection as $item) {
 }
 ```
 
-## DrawImporter
+## Import\DrawImporter
 
 Stateless, strict import service with a no-argument constructor.
 
 | Method | Parameters | Result | Throws |
 | --- | --- | --- | --- |
-| `fromArray` | `GameRules $game, iterable<mixed> $rows` | DrawCollection | ImportException on malformed record, invalid values/date, conflicting game data or duplicate IDs |
-| `fromJson` | `GameRules $game, string $json` | DrawCollection | ImportException on invalid JSON, non-list root or invalid record |
-| `fromCsv` | `GameRules $game, string $csv, string $delimiter = ','` | DrawCollection | ImportException on malformed quoting/header/cells, invalid separator or invalid record |
+| `import` | `GameRules $game, DrawSourceInterface $source` | DrawCollection | ImportException on malformed source data, invalid values/date or duplicate IDs |
 
-Inputs are **contents**, not file paths. Import is all-or-nothing. Empty PHP/JSON
-lists and header-only CSV are accepted. The importer does not fetch external data
-and does not guess schemas, dates, pool names or missing IDs. An upstream iterable
-that throws its own transport exception propagates it unless it is a
-LotteryException, in which case record context is added.
+Imports are all-or-nothing. Sources yield typed records and the importer validates
+all records before returning a collection. A source that throws its own transport
+exception propagates it unless it is a `LotteryException`, in which case record
+context is added and the original exception is preserved as the cause. Positions
+are one-based counts of consumed records, independent of iterable keys. Parse
+failures before any record is yielded are reported at record 1; CSV errors may
+also include their source record position (counting the header and blank lines).
 
-Strict supported formats, quoting and timezone rules are specified in
+## Import\DrawRecord
+
+Immutable input DTO with constructor `__construct(string $id, string $date,
+array $numbers)`. All three properties are public and readonly. It represents
+input data, not a validated draw: the importer validates the date, ID and number
+rules. Numbers remain strict integers with no coercion.
+
+## Import\DrawSourceInterface and built-in sources
+
+`records(GameRules $game): iterable<DrawRecord>` produces input records in source
+order. Implement it to add a format without changing the importer. The contract
+requires `DrawRecord` instances and must not silently discard malformed data.
+
+The built-in adapters live in `Rupcom\LotteryToolkit\Import\Source`:
+
+| Source | Constructor | Contract |
+| --- | --- | --- |
+| `InMemoryDrawSource` | `iterable<DrawRecord> $records` | Typed records; a generator is consumed once |
+| `JsonDrawSource` | `string $json` | JSON contents, top-level list with strict record fields |
+| `CsvDrawSource` | `string $csv, string $delimiter = ','` | CSV contents with exact unique headers and strict quoting; validates delimiter at construction |
+
+Text sources take **contents**, not file paths. Empty typed/JSON lists and
+header-only CSV are accepted. Decoding happens when iterated. Sources do not fetch
+external data or guess schemas, dates, pool names or missing IDs. Domain validation
+belongs to the importer, so calling `records()` alone does not validate a history.
+
+Strict formats, quoting and timezone rules are specified in
 [getting started](getting-started.md#import-contracts).
 
 ```php
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\Source\CsvDrawSource;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Import\Source\JsonDrawSource;
+
 $importer = new DrawImporter();
-$csvDraws = $importer->fromCsv(GameRules::lotto(), "id,date,main\na,2026-01-01,1 2 3 4 5 6\n");
-$jsonDraws = $importer->fromJson(GameRules::lotto(), '[]');
-$arrayDraws = $importer->fromArray(GameRules::lotto(), []);
+$csvDraws = $importer->import(GameRules::lotto(), new CsvDrawSource("id,date,main\na,2026-01-01,1 2 3 4 5 6\n"));
+$jsonDraws = $importer->import(GameRules::lotto(), new JsonDrawSource('[]'));
+$emptyDraws = $importer->import(GameRules::lotto(), new InMemoryDrawSource([]));
 ```
 
 ## DrawProviderInterface

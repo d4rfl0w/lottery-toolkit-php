@@ -13,7 +13,7 @@ An optional Symfony bundle provides configuration, autowiring and provider alias
 ## Features
 
 - Lotto, Mini Lotto, Eurojackpot and configurable games with independent number pools.
-- Strict CSV, JSON and PHP array imports; a provider interface for your own data sources.
+- Strict CSV, JSON and typed PHP record imports; a provider interface for your own data sources.
 - Frequency rankings, recency, pairs, odd/even and sum distributions.
 - Inclusive date filtering and analysis of the latest N draws.
 - Immutable, validated draws and multiple-bet tickets; structured match reports.
@@ -68,14 +68,17 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\DrawImporter;
-use Rupcom\LotteryToolkit\GameRules;
-use Rupcom\LotteryToolkit\StatisticsAnalyzer;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\DrawRecord;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
-$draws = (new DrawImporter())->fromArray(GameRules::lotto(), [
-    ['id' => 'demo-1', 'date' => '2026-01-01', 'numbers' => ['main' => [1, 2, 3, 4, 5, 6]]],
-    ['id' => 'demo-2', 'date' => '2026-01-03', 'numbers' => ['main' => [2, 3, 4, 5, 6, 7]]],
-]);
+$importer = new DrawImporter();
+$draws = $importer->import(GameRules::lotto(), new InMemoryDrawSource([
+    new DrawRecord('demo-1', '2026-01-01', ['main' => [1, 2, 3, 4, 5, 6]]),
+    new DrawRecord('demo-2', '2026-01-03', ['main' => [2, 3, 4, 5, 6, 7]]),
+]));
 $report = (new StatisticsAnalyzer())->analyze($draws);
 echo json_encode($report->mostFrequent(3), JSON_THROW_ON_ERROR); // {"2":2,"3":2,"4":2}
 ```
@@ -100,11 +103,15 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawImporter, GameRules, NumberPool, StatisticsAnalyzer};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Game\NumberPool;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\Source\JsonDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
 $game = new GameRules('demo', [new NumberPool('main', count: 3, min: 1, max: 10)]);
-$history = (new DrawImporter())->fromJson($game,
-    '[{"id":"demo","date":"2026-01-03","numbers":{"main":[1,5,9]}}]');
+$importer = new DrawImporter();
+$history = $importer->import($game, new JsonDrawSource('[{"id":"demo","date":"2026-01-03","numbers":{"main":[1,5,9]}}]'));
 $selected = $history->between(
     new DateTimeImmutable('2026-01-01T00:00:00Z'),
     new DateTimeImmutable('2026-01-31T23:59:59Z'),
@@ -113,9 +120,12 @@ echo json_encode((new StatisticsAnalyzer())->analyze($selected), JSON_THROW_ON_E
 ```
 
 Use composition to add caching or persistence. Implement `DrawProviderInterface`
-for alternative storage. Core service classes are final; the provider interface
+for alternative storage. Core service classes are final; the provider and source interfaces
 and injected `Randomizer` are the intended implementation replacement points.
 See [architecture and compatibility](docs/architecture.md).
+
+Source modules and the breaking namespace/API changes are documented in the
+[migration guide](docs/architecture.md#migration-from-the-initial-flat-api).
 
 ## Supported Lottery Games
 
@@ -144,21 +154,24 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawImporter, GameRules};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\Source\CsvDrawSource;
+use Rupcom\LotteryToolkit\Import\Source\JsonDrawSource;
 
 $importer = new DrawImporter();
 $game = GameRules::lotto();
 $csv = "id,date,main\ndemo-1,2026-01-01,1 2 3 4 5 6\n";
-$draws = $importer->fromCsv($game, $csv);
+$draws = $importer->import($game, new CsvDrawSource($csv));
 $json = '[{"id":"demo-1","date":"2026-01-01","numbers":{"main":[1,2,3,4,5,6]}}]';
-$sameDraws = $importer->fromJson($game, $json);
+$sameDraws = $importer->import($game, new JsonDrawSource($json));
 if ($draws != $sameDraws) {
     throw new RuntimeException('Imports must agree.');
 }
 ```
 
-`fromCsv()` and `fromJson()` accept **contents, not filenames**. Read a local file
-explicitly, check for an I/O failure, and pass its contents to the importer.
+`CsvDrawSource` and `JsonDrawSource` accept **contents, not filenames**. Read a local file
+explicitly, check for an I/O failure, and wrap its contents in the appropriate source.
 See [format contracts and errors](docs/getting-started.md#import-contracts).
 
 ## Statistical Analysis
@@ -169,12 +182,16 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawImporter, GameRules, StatisticsAnalyzer};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\DrawRecord;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
-$draws = (new DrawImporter())->fromArray(GameRules::eurojackpot(), [
-    ['id' => 'demo-ej', 'date' => '2026-01-01',
-     'numbers' => ['main' => [1, 2, 3, 4, 5], 'euro' => [10, 12]]],
-]);
+$importer = new DrawImporter();
+$draws = $importer->import(GameRules::eurojackpot(), new InMemoryDrawSource([
+    new DrawRecord('demo-ej', '2026-01-01', ['main' => [1, 2, 3, 4, 5], 'euro' => [10, 12]]),
+]));
 $report = (new StatisticsAnalyzer())->analyze($draws, pool: 'euro');
 echo json_encode([
     'most' => $report->mostFrequent(2),
@@ -200,7 +217,10 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{Draw, GameRules, LotteryTicket, TicketChecker};
+use Rupcom\LotteryToolkit\Draw\Draw;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Ticket\LotteryTicket;
+use Rupcom\LotteryToolkit\Ticket\TicketChecker;
 
 $game = GameRules::lotto();
 $ticket = new LotteryTicket($game, [
@@ -228,7 +248,8 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{GameRules, NumberGenerator};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Ticket\NumberGenerator;
 
 $ticket = (new NumberGenerator())->generate(GameRules::eurojackpot(), bets: 3);
 echo json_encode($ticket->bets, JSON_THROW_ON_ERROR);

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rupcom\LotteryToolkit;
+namespace Rupcom\LotteryToolkit\Ticket;
 
 use Rupcom\LotteryToolkit\Exception\ValidationException;
 

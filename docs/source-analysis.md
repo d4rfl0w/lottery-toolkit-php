@@ -10,7 +10,7 @@ copied. The application was not modified.
 | --- | --- | --- |
 | `GameCatalog` | Associative configuration for game counts, ranges, prices and schedules | New immutable GameRules/NumberPool; only selection rules included |
 | `DrawResult`, repository, `DrawStorage` | Doctrine persistence, game/date lookup, latest sorting and upserts | Persistence stays outside the core; DrawCollection and provider interface |
-| `OfficialDrawImporter` | API-specific payload normalization, game mapping, history retrieval and rate-limit retries | No API connector copied; strict generic CSV/JSON/array imports |
+| `OfficialDrawImporter` | API-specific payload normalization, game mapping, history retrieval and rate-limit retries | No API connector copied; strict generic CSV/JSON/typed-record imports |
 | `AiNumberSuggestionService` | Main/special frequency maps and hot/cold ranking plus suggestion strategies | Independent descriptive frequency/pair/distribution analysis; no prediction features |
 | `TicketController` | Count, range and uniqueness checks in request handling | Constructor validation shared by draws, tickets and generator output |
 | `TicketChecker` | Per-line intersections and potential-win heuristic | Multiset-safe per-pool counts; no payout or potential-win heuristic |

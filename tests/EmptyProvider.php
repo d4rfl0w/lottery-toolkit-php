@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Rupcom\LotteryToolkit\Tests;
 
-use Rupcom\LotteryToolkit\{DrawCollection, DrawProviderInterface, GameRules};
+use Rupcom\LotteryToolkit\Draw\DrawCollection;
+use Rupcom\LotteryToolkit\Draw\DrawProviderInterface;
+use Rupcom\LotteryToolkit\Game\GameRules;
 
 final class EmptyProvider implements DrawProviderInterface
 {

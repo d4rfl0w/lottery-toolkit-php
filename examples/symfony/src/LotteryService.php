@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace LotteryToolkitExample;
 
-use Rupcom\LotteryToolkit\{DrawProviderInterface, GameRules, LotteryTicket, MatchResult, StatisticsAnalyzer, StatisticsReport, TicketChecker};
+use Rupcom\LotteryToolkit\Draw\DrawProviderInterface;
 use Rupcom\LotteryToolkit\Exception\ValidationException;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
+use Rupcom\LotteryToolkit\Statistics\StatisticsReport;
+use Rupcom\LotteryToolkit\Ticket\LotteryTicket;
+use Rupcom\LotteryToolkit\Ticket\MatchResult;
+use Rupcom\LotteryToolkit\Ticket\TicketChecker;
 
 final readonly class LotteryService
 {

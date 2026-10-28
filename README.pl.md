@@ -50,11 +50,16 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawImporter, GameRules, StatisticsAnalyzer};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\DrawRecord;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
-$draws = (new DrawImporter())->fromArray(GameRules::lotto(), [
-    ['id' => 'demo', 'date' => '2026-01-01', 'numbers' => ['main' => [1, 2, 3, 4, 5, 6]]],
-]);
+$importer = new DrawImporter();
+$draws = $importer->import(GameRules::lotto(), new InMemoryDrawSource([
+    new DrawRecord('demo', '2026-01-01', ['main' => [1, 2, 3, 4, 5, 6]]),
+]));
 $report = (new StatisticsAnalyzer())->analyze($draws);
 echo json_encode($report->mostFrequent(3), JSON_THROW_ON_ERROR);
 ```

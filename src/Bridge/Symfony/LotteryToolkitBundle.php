@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace Rupcom\LotteryToolkit\Bridge\Symfony;
 
-use Rupcom\LotteryToolkit\{DrawImporter, DrawProviderInterface, GameRegistry, GameRules, NumberGenerator, NumberPool, StatisticsAnalyzer, TicketChecker};
+use Rupcom\LotteryToolkit\Draw\DrawProviderInterface;
+use Rupcom\LotteryToolkit\Game\GameRegistry;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Game\NumberPool;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
+use Rupcom\LotteryToolkit\Ticket\NumberGenerator;
+use Rupcom\LotteryToolkit\Ticket\TicketChecker;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

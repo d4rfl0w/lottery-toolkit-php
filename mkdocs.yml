@@ -23,7 +23,7 @@ nav:
   - Changelog: CHANGELOG.md
   - License notices: THIRD_PARTY_NOTICES.md
   - Dependency inventory: docs/dependency-licenses.md
-  - Initial API design: docs/api-design.md
+  - API design: docs/api-design.md
   - Polski: README.pl.md
   - Release process: docs/publishing.md
   - Roadmap: docs/OPEN_SOURCE_ROADMAP.md

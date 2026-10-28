@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Rupcom\LotteryToolkit;
+namespace Rupcom\LotteryToolkit\Draw;
 
 use Rupcom\LotteryToolkit\Exception\GameMismatchException;
 use Rupcom\LotteryToolkit\Exception\ValidationException;
+use Rupcom\LotteryToolkit\Game\GameRules;
 
 /** @implements \IteratorAggregate<int, Draw> */
 final readonly class DrawCollection implements \IteratorAggregate, \Countable

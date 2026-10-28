@@ -19,7 +19,13 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawCollection, DrawImporter, DrawProviderInterface, GameRules, StatisticsAnalyzer};
+use Rupcom\LotteryToolkit\Draw\DrawCollection;
+use Rupcom\LotteryToolkit\Draw\DrawProviderInterface;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\DrawRecord;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
 $provider = new class(new DrawImporter()) implements DrawProviderInterface {
     public function __construct(private readonly DrawImporter $importer) {}
@@ -29,10 +35,9 @@ $provider = new class(new DrawImporter()) implements DrawProviderInterface {
         if (!$game->equals(GameRules::lotto())) {
             return new DrawCollection($game);
         }
-        return $this->importer->fromArray($game, [
-            ['id' => 'synthetic', 'date' => '2026-01-01',
-             'numbers' => ['main' => [1, 2, 3, 4, 5, 6]]],
-        ]);
+        return $this->importer->import($game, new InMemoryDrawSource([
+            new DrawRecord('synthetic', '2026-01-01', ['main' => [1, 2, 3, 4, 5, 6]]),
+        ]));
     }
 };
 $report = (new StatisticsAnalyzer())->analyze($provider->getDraws(GameRules::lotto()));
@@ -47,7 +52,8 @@ for file I/O and [Symfony configuration](symfony-integration.md) for registratio
 ## Remote sources and persistence
 
 Keep HTTP clients, database repositories and credentials in your provider or a
-separate adapter package. Map external fields to the importer schema explicitly.
+separate adapter package. Map external fields explicitly to `DrawRecord` objects in a `DrawSourceInterface`
+implementation, or construct validated draws directly.
 Use stable provider IDs; fetch every page before returning a complete selected
 history. Decide whether upstream duplicate records are retries or conflicting
 results, then resolve or reject them before constructing the collection.

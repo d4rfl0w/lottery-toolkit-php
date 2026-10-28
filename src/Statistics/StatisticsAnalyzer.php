@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Rupcom\LotteryToolkit;
+namespace Rupcom\LotteryToolkit\Statistics;
+
+use Rupcom\LotteryToolkit\Draw\DrawCollection;
 
 final class StatisticsAnalyzer
 {

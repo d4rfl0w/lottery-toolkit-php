@@ -42,12 +42,18 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawImporter, GameRules, StatisticsAnalyzer};
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\DrawRecord;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
-$history = (new DrawImporter())->fromArray(GameRules::lotto(), [
-    ['id' => 'a', 'date' => '2026-01-01', 'numbers' => ['main' => [1,2,3,4,5,6]]],
-    ['id' => 'b', 'date' => '2026-01-03', 'numbers' => ['main' => [2,3,4,5,6,7]]],
-]);
+$importer = new DrawImporter();
+
+$history = $importer->import(GameRules::lotto(), new InMemoryDrawSource([
+    new DrawRecord('a', '2026-01-01', ['main' => [1,2,3,4,5,6]]),
+    new DrawRecord('b', '2026-01-03', ['main' => [2,3,4,5,6,7]]),
+]));
 $selected = $history->between(from: new DateTimeImmutable('2026-01-02T00:00:00Z'))->last(1);
 $report = (new StatisticsAnalyzer())->analyze($selected);
 if ($report->drawsSinceLastOccurrence[1] !== null || $report->frequency[7] !== 1) {

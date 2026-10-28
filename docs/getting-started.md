@@ -28,7 +28,11 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{Draw, DrawCollection, GameRules, NumberPool, StatisticsAnalyzer};
+use Rupcom\LotteryToolkit\Draw\Draw;
+use Rupcom\LotteryToolkit\Draw\DrawCollection;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Game\NumberPool;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
 
 $game = new GameRules('community_draw', [new NumberPool('main', 2, 10, 15)]);
 $draw = new Draw($game, 'synthetic-1', new DateTimeImmutable('2026-01-01T12:00:00Z'),
@@ -54,20 +58,20 @@ records. Preprocess intentional deduplication in your provider.
 
 | Input | Contract |
 | --- | --- |
-| PHP | `iterable<mixed>` of associative records, exactly `id`, `date`, `numbers` |
-| JSON | A top-level array of those records; no envelope and no BOM |
+| PHP | `InMemoryDrawSource` containing `iterable<DrawRecord>` with typed `id`, `date`, `numbers` fields |
+| JSON | A top-level array of objects with exactly `id`, `date`, `numbers`; no envelope and no BOM |
 | CSV | Header contains exactly `id`, `date` and all game pool names, in any order |
 
 `id` must be a non-blank string. `numbers` contains exactly the game's named pools.
 PHP/JSON numbers must be integers, not strings, floats, booleans or null. Every pool
-is a list, not a sparse associative array. Extra record fields are rejected; map
+is a list, not a sparse associative array. Extra JSON record fields are rejected; map
 provider-specific metadata before import.
 
 CSV uses one space between integers in each pool cell. Leading/trailing cell
 whitespace is trimmed for numbers only. Empty lines are skipped. Headers are case
 sensitive and unique. A UTF-8 BOM at the beginning is accepted. LF/CRLF, quoted
 commas, multiline fields and doubled quotes are supported; backslash escaping is
-not. `fromCsv($game, $contents, delimiter: ';')` supports an alternate single-byte
+not. `new CsvDrawSource($contents, delimiter: ';')` supports an alternate single-byte
 separator, except space, quote, NUL or newline. Malformed quoting, missing columns,
 extra columns and oversized integers fail explicitly. A header-only CSV is an
 empty collection; a completely empty CSV is an error.
@@ -94,14 +98,17 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Rupcom\LotteryToolkit\{DrawImporter, GameRules};
 use Rupcom\LotteryToolkit\Exception\ImportException;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\Source\CsvDrawSource;
 
 $csv = @file_get_contents('examples/symfony/data/draws.csv');
 if ($csv === false) {
     throw new ImportException('Cannot read the configured fixture.');
 }
-$draws = (new DrawImporter())->fromCsv(GameRules::lotto(), $csv);
+$importer = new DrawImporter();
+$draws = $importer->import(GameRules::lotto(), new CsvDrawSource($csv));
 if (count($draws) !== 3) {
     throw new RuntimeException('Expected three synthetic records.');
 }

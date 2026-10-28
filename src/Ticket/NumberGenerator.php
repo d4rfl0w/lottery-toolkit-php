@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Rupcom\LotteryToolkit;
+namespace Rupcom\LotteryToolkit\Ticket;
 
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Rupcom\LotteryToolkit\Exception\ValidationException;
+use Rupcom\LotteryToolkit\Game\GameRules;
 
 final class NumberGenerator
 {

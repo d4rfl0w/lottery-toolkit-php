@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Rupcom\LotteryToolkit;
+namespace Rupcom\LotteryToolkit\Draw;
+
+use Rupcom\LotteryToolkit\Game\GameRules;
 
 interface DrawProviderInterface
 {

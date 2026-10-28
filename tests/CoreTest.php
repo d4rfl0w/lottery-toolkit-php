@@ -8,8 +8,20 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
-use Rupcom\LotteryToolkit\{Draw, DrawCollection, DrawImporter, FrequencyOrder, GameRegistry, GameRules, LotteryTicket, NumberGenerator, NumberPool, StatisticsAnalyzer, TicketChecker};
-use Rupcom\LotteryToolkit\Exception\{GameMismatchException, ValidationException};
+use Rupcom\LotteryToolkit\Draw\Draw;
+use Rupcom\LotteryToolkit\Draw\DrawCollection;
+use Rupcom\LotteryToolkit\Exception\GameMismatchException;
+use Rupcom\LotteryToolkit\Exception\ValidationException;
+use Rupcom\LotteryToolkit\Game\GameRegistry;
+use Rupcom\LotteryToolkit\Game\GameRules;
+use Rupcom\LotteryToolkit\Game\NumberPool;
+use Rupcom\LotteryToolkit\Import\DrawImporter;
+use Rupcom\LotteryToolkit\Import\DrawRecord;
+use Rupcom\LotteryToolkit\Import\Source\InMemoryDrawSource;
+use Rupcom\LotteryToolkit\Statistics\StatisticsAnalyzer;
+use Rupcom\LotteryToolkit\Ticket\LotteryTicket;
+use Rupcom\LotteryToolkit\Ticket\NumberGenerator;
+use Rupcom\LotteryToolkit\Ticket\TicketChecker;
 
 final class CoreTest extends TestCase
 {
@@ -115,11 +127,11 @@ final class CoreTest extends TestCase
     public function testFilteringAndChronologicalOrdering(): void
     {
         $game = new GameRules('demo', [new NumberPool('main', 1, 1, 9)]);
-        $draws = (new DrawImporter())->fromArray($game, [
-            ['id' => 'b', 'date' => '2026-01-02', 'numbers' => ['main' => [2]]],
-            ['id' => 'a', 'date' => '2026-01-01', 'numbers' => ['main' => [1]]],
-            ['id' => 'c', 'date' => '2026-01-02', 'numbers' => ['main' => [3]]],
-        ]);
+        $draws = (new DrawImporter())->import($game, new InMemoryDrawSource([
+            new DrawRecord('b', '2026-01-02', ['main' => [2]]),
+            new DrawRecord('a', '2026-01-01', ['main' => [1]]),
+            new DrawRecord('c', '2026-01-02', ['main' => [3]]),
+        ]));
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Draw $d) => $d->id, $draws->toArray()));
         self::assertSame('c', $draws->latest()->id);
         self::assertCount(2, $draws->last(2));
@@ -182,6 +194,24 @@ final class CoreTest extends TestCase
         $draw = new Draw($game, 'x', new \DateTimeImmutable(), ['main' => [1, 2, 2]]);
         $ticket = new LotteryTicket($game, [['main' => [1, 1, 2]]]);
         self::assertSame([1, 2], (new TicketChecker())->check($ticket, $draw)[0]->matchedNumbers['main']);
+    }
+
+    public function testRepeatedNumberCountsAreIndependentForEveryBetAndPool(): void
+    {
+        $game = new GameRules('repeat', [
+            new NumberPool('main', 3, 1, 2, true),
+            new NumberPool('bonus', 2, 1, 2, true),
+        ]);
+        $draw = new Draw($game, 'x', new \DateTimeImmutable(), ['main' => [1, 2, 2], 'bonus' => [1, 1]]);
+        $bet = ['main' => [1, 1, 2], 'bonus' => [1, 2]];
+        $ticket = new LotteryTicket($game, [$bet, $bet]);
+        $checker = new TicketChecker();
+
+        $matches = $checker->check($ticket, $draw);
+
+        self::assertSame(['bonus' => [1], 'main' => [1, 2]], $matches[0]->matchedNumbers);
+        self::assertSame($matches[0]->matchedNumbers, $matches[1]->matchedNumbers);
+        self::assertEquals($matches, $checker->check($ticket, $draw));
     }
 
     public function testGeneratorValidatesAllGamesAndIsReproducibleWhenInjected(): void
